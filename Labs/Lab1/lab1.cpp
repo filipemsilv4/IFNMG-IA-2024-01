@@ -1,12 +1,11 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <queue>
 
 #define MATRIX_SIDE 3
 #define MATRIX_SIZE 9
 #define EMPTY_VALUE 0
-
-typedef pair<int,int> action;
 
 using namespace std;
 
@@ -14,12 +13,12 @@ class Node{
     private:
         vector<int> state;
         Node *parent;
-        action action_applied;
+        pair<int,int> action_applied;
 
     public:
         vector<int> get_state(){ return this->state; }
         Node *get_parent(){ return this->parent; }
-        action get_action_applied(){ return this->action_applied; }
+        pair<int,int> get_action_applied(){ return this->action_applied; }
 
         Node(Node *parent, pair<int,int> action_to_be_applied){
             this->state = parent->get_state();
@@ -34,14 +33,37 @@ class Node{
         }
 };
 
+class Frontier{
+    private:
+        queue<Node> frontier;
+    public:
+        void add(Node n){ this->frontier.push(n); }
+
+        void remove(){ 
+            if (!frontier.empty()){
+                throw "The frontier is empty.";
+                return;
+            }
+            this->frontier.pop();
+        }
+
+        bool contains(Node n){
+            queue<Node> frontier_copy = this->frontier;
+            while(!frontier_copy.empty()){
+                if (frontier_copy.front().same_state_as(n)) return true;
+                frontier_copy.pop();
+            }
+            return false;
+        }
+
+        bool empty(){ return frontier.empty(); }
+};
+
 vector<int> res;
-// Cima, Baixo, Esquerda, Direita
-vector<int> deslocamento{ -MATRIX_SIDE, MATRIX_SIDE, -1, +1};
 
-// acoes
-// resultado
-
-vector<pair<int,int>> acoes(vector<int> m){
+vector<pair<int,int>> get_possible_actions(vector<int> m){
+    // Cima, Baixo, Esquerda, Direita
+    vector<int> deslocamento{ -MATRIX_SIDE, MATRIX_SIDE, -1, +1};
 
     vector<pair<int,int>> possibilidades; // vector<index, index_destino>
 
