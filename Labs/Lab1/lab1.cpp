@@ -2,6 +2,7 @@
 #include <vector>
 #include <utility>
 #include <queue>
+#include <set>
 
 #define MATRIX_SIDE 3
 #define MATRIX_SIZE 9
@@ -20,8 +21,8 @@ class Node{
         Node *get_parent(){ return this->parent; }
         pair<int,int> get_action_applied(){ return this->action_applied; }
 
-        Node(Node *parent, pair<int,int> action_to_be_applied){
-            this->state = parent->get_state();
+        Node(Node *parent, vector<int> parent_state, pair<int,int> action_to_be_applied){
+            this->state = parent_state;
             swap(this->state[action_to_be_applied.first],
                  this->state[action_to_be_applied.second]);
             this->parent = parent;
@@ -39,12 +40,15 @@ class Frontier{
     public:
         void add(Node n){ this->frontier.push(n); }
 
-        void remove(){ 
-            if (!frontier.empty()){
+        Node remove(){
+            if (frontier.empty()){
+                cout << "Error: can't remove from a empty frontier" << endl;
                 throw "The frontier is empty.";
-                return;
+                exit(-1);
             }
+            Node n = frontier.front();
             this->frontier.pop();
+            return n; // returns the removed Node
         }
 
         bool contains(Node n){
@@ -60,6 +64,7 @@ class Frontier{
 };
 
 vector<int> res;
+vector<int> error{-1, -2, -3, -4, 5, 6, 7, 8, 0};
 
 vector<pair<int,int>> get_possible_actions(vector<int> m){
     // Cima, Baixo, Esquerda, Direita
@@ -84,12 +89,67 @@ vector<pair<int,int>> get_possible_actions(vector<int> m){
     return possibilidades;
 }
 
-vector<int> apply_action(vector<int> state, pair<int, int> action){
+void apply_action(vector<int> state, pair<int, int> action){
     swap(state[action.first], state[action.second]);
 }
 
+bool is_goal(vector<int> g){
+
+    if (g.size() == 0 || g.size() == 1) return true;
+
+    if (g[g.size() - 1] != EMPTY_VALUE) return false; 
+
+    for (int i = 1; i < g.size() - 1; i++){
+        if (g[i] > g[i - 1]) continue;
+        return false;
+    }
+
+    return true;
+}
+
 vector<int> solve(vector<int> m){
+    Node initial_state(NULL, m, {0,0});
+    Frontier frontier;
+    frontier.add(initial_state);
+    set<vector<int>> known_states;
+
+    while(true){
+        if (frontier.empty()){
+            cout << "No solution: empty frontier" << endl;
+            throw "No solution";
+            exit(-2);
+        }
+
+        Node n = frontier.remove();
+
+        // Check if Node is the Goal
+        if (is_goal(n.get_state())){
+            // Do something
+            cout << "Goal found!" << endl;
+            return n.get_state();
+        }
+        
+        //bool already_known = known_states.insert(n.get_state()).second;
+
+        // Try to add state to the set of known ones, jump iteration if already there
+        known_states.insert(n.get_state());
+
+        // Expand the node
+        vector<pair<int,int>> possible_actions = get_possible_actions(n.get_state());
+
+        for (auto u : possible_actions){
+            Node new_node(&n, n.get_state(), u);
+
+            if ((!frontier.contains(new_node)) && 
+                (known_states.find(new_node.get_state()) == known_states.end())){
+                frontier.add(new_node);
+            }
+        }
+    }
     
+    cout << "Reached end of solve() without a valid solution" << endl;
+    throw "No solution";
+    exit(-3);
 }
 
 int main(){
@@ -107,8 +167,10 @@ int main(){
         matrix.push_back(tmp);
     }
 
+    cout << "Solving..." << endl;
     vector<int> maybe_solved = solve(matrix);
 
+    cout << "Result:" << endl;
     // Printing result
     for(int i = 0; i < maybe_solved.size(); i++){
         cout << maybe_solved[i] << " ";
