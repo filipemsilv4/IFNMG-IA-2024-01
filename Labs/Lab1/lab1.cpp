@@ -1,187 +1,168 @@
 #include <iostream>
 #include <vector>
-#include <utility>
 #include <queue>
 #include <set>
-
-#define MATRIX_SIDE 3
-#define MATRIX_SIZE 9
-#define EMPTY_VALUE 0
+#include <unordered_set>
 
 using namespace std;
 
-class Node{
-    private:
-        vector<int> state;
-        Node *parent;
-        pair<int,int> action_applied;
-
+class Node {
     public:
-        vector<int> get_state(){ return this->state; }
-        Node *get_parent(){ return this->parent; }
-        pair<int,int> get_action_applied(){ return this->action_applied; }
+        vector<vector<int>> state;
+        int size;
+        pair<int, int> emptyPos;
 
-        Node(Node *parent, vector<int> parent_state, pair<int,int> action_to_be_applied){
-            this->state = parent_state;
-            swap(this->state[action_to_be_applied.first],
-                 this->state[action_to_be_applied.second]);
-            this->parent = parent;
-            this->action_applied = action_to_be_applied;
+        Node(vector<vector<int>> initial) {
+            state = initial;
+            size = initial.size();
+            findEmptyPosition();
         }
 
-        bool same_state_as(Node n){
-            return n.get_state() == this->get_state();
+        bool operator==(const Node& other) const {
+            return state == other.state;
+        }
+
+        bool operator!=(const Node& other) const {
+            return !(*this == other);
+        }
+
+        void findEmptyPosition() {
+            for (int i = 0; i < size; ++i) {
+                for (int j = 0; j < size; ++j) {
+                    if (state[i][j] == 0) {
+                        emptyPos = {i, j};
+                        return;
+                    }
+                }
+            }
+        }
+
+        vector<Node> getNeighbors() const {
+            vector<Node> neighbors;
+
+            const int moves[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+            for (int i = 0; i < 4; ++i) {
+                int x = emptyPos.first + moves[i][0];
+                int y = emptyPos.second + moves[i][1];
+
+                if (x >= 0 && x < size && y >= 0 && y < size) {
+                    vector<vector<int>> newState = state;
+                    swap(newState[emptyPos.first][emptyPos.second], newState[x][y]);
+                    Node neighbor(newState);
+                    neighbors.push_back(neighbor);
+                }
+            }
+
+            return neighbors;
         }
 };
 
-class Frontier{
-    private:
-        queue<Node> frontier;
+namespace std {
+    template <>
+    struct hash<Node> {
+        size_t operator()(const Node& n) const {
+            size_t hashVal = 0;
+            for (const auto& row : n.state) {
+                for (int val : row) {
+                    hashVal ^= hash<int>{}(val) + 0x9e3779b9 + (hashVal << 6) + (hashVal >> 2);
+                }
+            }
+            return hashVal;
+        }
+    };
+}
+
+class Frontier {
     public:
-        void add(Node n){ this->frontier.push(n); }
+        queue<Node> nodes;
+        unordered_set<Node> visited;
 
-        Node remove(){
-            if (frontier.empty()){
-                cout << "Error: can't remove from a empty frontier" << endl;
-                throw "The frontier is empty.";
-                exit(-1);
-            }
-            Node n = frontier.front();
-            this->frontier.pop();
-            return n; // returns the removed Node
+        bool isEmpty() const {
+            return nodes.empty();
         }
 
-        bool contains_state(vector<int> state){
-            queue<Node> frontier_copy = this->frontier;
-            while(!frontier_copy.empty()){
-                if (frontier_copy.front().get_state() == state) return true;
-                frontier_copy.pop();
-            }
-            return false;
+        int queueSize() const { return nodes.size(); }
+        int visitedSize() const { return visited.size(); }
+
+        void enqueue(const Node& node) {
+            nodes.push(node);
+            visited.insert(node);
         }
 
-        int size(){ return this->frontier.size(); }
+        Node dequeue() {
+            Node front = nodes.front();
+            nodes.pop();
+            return front;
+        }
 
-        bool empty(){ return frontier.empty(); }
+        bool isVisited(const Node& node) const {
+            return visited.count(node) > 0;
+        }
 };
 
-vector<int> res;
-vector<int> error{-1, -2, -3, -4, 5, 6, 7, 8, 0};
-
-vector<pair<int,int>> get_possible_actions(vector<int> m){
-    // Cima, Baixo, Esquerda, Direita
-    vector<int> deslocamento{ -MATRIX_SIDE, MATRIX_SIDE, -1, +1};
-
-    vector<pair<int,int>> possibilidades; // vector<index, index_destino>
-
-    for (int i = 0; i < MATRIX_SIZE; i++){
-        for (auto d : deslocamento){
-            int new_pos = i + d;
-            // Se ultrapassar as bordas da matriz:
-            if (new_pos >= MATRIX_SIZE || new_pos < 0) continue;
-
-            // Verificar se o espaço tá vazio
-            if (m[new_pos] != EMPTY_VALUE) continue;
-
-            // Se o deslocamento for possível:
-            possibilidades.push_back({i, new_pos});
+bool isSolved(const Node& node) {
+    int num = 1;
+    for (int i = 0; i < node.size; ++i) {
+        for (int j = 0; j < node.size; ++j) {
+            if (node.state[i][j] != num % (node.size * node.size)) {
+                return false;
+            }
+            num++;
         }
     }
-
-    return possibilidades;
-}
-
-void apply_action(vector<int> state, pair<int, int> action){
-    swap(state[action.first], state[action.second]);
-}
-
-bool is_goal(vector<int> g){
-
-    if (g.size() == 0 || g.size() == 1) return true;
-
-    if (g[g.size() - 1] != EMPTY_VALUE) return false; 
-
-    for (int i = 1; i < g.size() - 1; i++){
-        if (g[i] > g[i - 1]) continue;
-        return false;
-    }
-
     return true;
 }
 
-vector<int> solve(vector<int> m){
-    Node initial_state(NULL, m, {0,0});
+void printSolution(const Node& node, const int &steps) {
+    cout << "Solution found with " << steps << " steps!" << endl;
+    for (int i = 0; i < node.size; ++i) {
+        for (int j = 0; j < node.size; ++j) {
+            cout << node.state[i][j] << " ";
+        }
+        cout << endl;
+    }
+}
+
+void solvePuzzle(const Node& initialNode) {
     Frontier frontier;
-    frontier.add(initial_state);
-    set<vector<int>> known_states;
+    frontier.enqueue(initialNode);
+    int steps = 0;
 
-    while(true){
-        cout << "frontier size: " << frontier.size() << endl;
-        cout << "known states: " << known_states.size() << endl;
-        if (frontier.empty()){
-            cout << "No solution: empty frontier" << endl;
-            throw "No solution";
-            exit(-2);
+    while (!frontier.isEmpty()) {
+        Node current = frontier.dequeue();
+
+        // cout << "frontier size: " << frontier.queueSize() << endl;
+        // cout << "known states: " << frontier.visitedSize() << endl;
+
+        steps++;
+
+        if (isSolved(current)) {
+            printSolution(current, steps);
+            return;
         }
 
-        Node n = frontier.remove();
-
-        // Check if Node is the Goal
-        if (is_goal(n.get_state())){
-            // Do something
-            cout << "Goal found!" << endl;
-            return n.get_state();
-        }
-
-        // Add state to the set of known ones
-        known_states.insert(n.get_state());
-
-        // Expand the node
-        vector<pair<int,int>> possible_actions = get_possible_actions(n.get_state());
-
-        for (auto u : possible_actions){
-            Node new_node(&n, n.get_state(), u);
-
-            // Se o frontier não contem esse estado e se esse estado ainda não foi explorado:
-            if ((!frontier.contains_state(new_node.get_state())) && 
-                (known_states.find(new_node.get_state()) == known_states.end())){
-                frontier.add(new_node);
+        vector<Node> neighbors = current.getNeighbors();
+        for (const Node& neighbor : neighbors) {
+            if (!frontier.isVisited(neighbor)) {
+                frontier.enqueue(neighbor);
             }
         }
     }
-    
-    cout << "Reached end of solve() without a valid solution" << endl;
-    throw "No solution";
-    exit(-3);
+
+    cout << "No solution found." << endl;
 }
 
-int main(){
-    vector<int> matrix;
+int main() {
+    // Example 3x3 puzzle, you can change the size and initial configuration
+    vector<vector<int>> initialConfig = {
+        {7, 2, 4},
+        {5, 0, 6},
+        {8, 3, 1}
+    };
 
-    // Answer
-    for (int i = 0; i < MATRIX_SIZE; i++){
-        res.push_back(i);
-    }
+    Node initialNode(initialConfig);
+    solvePuzzle(initialNode);
 
-    // Reading input matrix
-    cout << "Input the matrix:" << endl;
-    int tmp;
-    for (int i = 0; i < MATRIX_SIZE; i++){
-        cin >> tmp;
-        matrix.push_back(tmp);
-    }
-
-    cout << "Solving..." << endl;
-    vector<int> maybe_solved = solve(matrix);
-
-    cout << "Result:" << endl;
-    // Printing result
-    for(int i = 0; i < maybe_solved.size(); i++){
-        cout << maybe_solved[i] << " ";
-        if (i % MATRIX_SIDE == 0){
-            cout << endl;
-        }
-    }
-    
-    
+    return 0;
 }
