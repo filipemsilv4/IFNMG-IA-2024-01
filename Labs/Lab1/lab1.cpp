@@ -51,14 +51,16 @@ class Frontier{
             return n; // returns the removed Node
         }
 
-        bool contains(Node n){
+        bool contains_state(vector<int> state){
             queue<Node> frontier_copy = this->frontier;
             while(!frontier_copy.empty()){
-                if (frontier_copy.front().same_state_as(n)) return true;
+                if (frontier_copy.front().get_state() == state) return true;
                 frontier_copy.pop();
             }
             return false;
         }
+
+        int size(){ return this->frontier.size(); }
 
         bool empty(){ return frontier.empty(); }
 };
@@ -114,6 +116,8 @@ vector<int> solve(vector<int> m){
     set<vector<int>> known_states;
 
     while(true){
+        cout << "frontier size: " << frontier.size() << endl;
+        cout << "known states: " << known_states.size() << endl;
         if (frontier.empty()){
             cout << "No solution: empty frontier" << endl;
             throw "No solution";
@@ -128,10 +132,8 @@ vector<int> solve(vector<int> m){
             cout << "Goal found!" << endl;
             return n.get_state();
         }
-        
-        //bool already_known = known_states.insert(n.get_state()).second;
 
-        // Try to add state to the set of known ones, jump iteration if already there
+        // Add state to the set of known ones
         known_states.insert(n.get_state());
 
         // Expand the node
@@ -140,7 +142,8 @@ vector<int> solve(vector<int> m){
         for (auto u : possible_actions){
             Node new_node(&n, n.get_state(), u);
 
-            if ((!frontier.contains(new_node)) && 
+            // Se o frontier não contem esse estado e se esse estado ainda não foi explorado:
+            if ((!frontier.contains_state(new_node.get_state())) && 
                 (known_states.find(new_node.get_state()) == known_states.end())){
                 frontier.add(new_node);
             }
@@ -154,13 +157,14 @@ vector<int> solve(vector<int> m){
 
 int main(){
     vector<int> matrix;
-    
+
     // Answer
     for (int i = 0; i < MATRIX_SIZE; i++){
         res.push_back(i);
     }
 
     // Reading input matrix
+    cout << "Input the matrix:" << endl;
     int tmp;
     for (int i = 0; i < MATRIX_SIZE; i++){
         cin >> tmp;
