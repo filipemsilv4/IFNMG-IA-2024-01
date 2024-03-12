@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <limits.h>
+#include <climits>
 #include <utility>
 
 using namespace std;
@@ -101,11 +101,23 @@ class TicTacToe {
         // #Retorna Verdadeiro se o jogo acabou, Falso caso contrário
         // def final(tabuleiro):
         bool final(vector<vector<Player>> tabuleiro) {
-            return ganhador(tabuleiro) != Player::None;
+            for (int i = 0; i < tabuleiro.size(); ++i) {
+                for (int j = 0; j < tabuleiro[i].size(); ++j) {
+                    if (tabuleiro[i][j] == Player::None) {
+                        // The game may be over if someone has won
+                        if (ganhador(tabuleiro) != Player::None) {
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         // #Retorna 1 se X ganhou, -1 se 0 ganhou, 0 caso contrário.
         // def custo(tabuleiro):
+
         int custo(vector<vector<Player>> tabuleiro) {
             Player winner = ganhador(tabuleiro);
             if (winner == Player::X) {
@@ -121,19 +133,19 @@ class TicTacToe {
         // def minimax(tabuleiro):
         // pair meaning: (score, (row, col))
         pair<int, pair<int, int>> minimax(vector<vector<Player>> tabuleiro, int depth, int alpha, int beta, bool maximizingPlayer) {
-            if (final(tabuleiro)) {
+            if (final(tabuleiro) || depth == 0) {
                 return {custo(tabuleiro), {-1, -1}};
             }
 
             vector<pair<int, int>> actions = acoes(tabuleiro);
             pair<int, int> bestAction = {-1, -1};
 
-            // Maximizing player: X
+            // Maximizing player
             if (maximizingPlayer) {
                 int maxEval = -INT_MAX;
                 for (int i = 0; i < actions.size(); ++i) {
                     vector<vector<Player>> newBoard = resultado(tabuleiro, actions[i]);
-                    int eval = minimax(newBoard, depth + 1, alpha, beta, false).first;
+                    int eval = minimax(newBoard, depth - 1, alpha, beta, false).first;
                     if (eval > maxEval) {
                         maxEval = eval;
                         bestAction = actions[i];
@@ -148,7 +160,7 @@ class TicTacToe {
                 int minEval = INT_MAX;
                 for (int i = 0; i < actions.size(); ++i) {
                     vector<vector<Player>> newBoard = resultado(tabuleiro, actions[i]);
-                    int eval = minimax(newBoard, depth + 1, alpha, beta, true).first;
+                    int eval = minimax(newBoard, depth - 1, alpha, beta, true).first;
                     if (eval < minEval) {
                         minEval = eval;
                         bestAction = actions[i];
@@ -164,7 +176,8 @@ class TicTacToe {
 
         // #Executar jogada da IA
         void jogadaIA() {
-            pair<int, pair<int, int>> bestMove = minimax(tabuleiro, 0, -INT_MAX, INT_MAX, true);
+            pair<int, pair<int, int>> bestMove = minimax(tabuleiro, INT_MAX, -INT_MAX, INT_MAX, false);
+            cout << "Chosen score: " << bestMove.first << endl;
             tabuleiro = resultado(tabuleiro, bestMove.second);
         }
 
