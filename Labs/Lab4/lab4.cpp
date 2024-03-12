@@ -177,13 +177,37 @@ class TicTacToe {
         // #Executar jogada da IA
         void jogadaIA() {
             pair<int, pair<int, int>> bestMove = minimax(tabuleiro, INT_MAX, -INT_MAX, INT_MAX, false);
-            cout << "Chosen score: " << bestMove.first << endl;
             tabuleiro = resultado(tabuleiro, bestMove.second);
         }
 
         // #Executar jogada do jogador
         void jogadaJogador(int row, int col) {
             tabuleiro = resultado(tabuleiro, {row, col});
+        }
+
+        // Print the board
+        void printBoard() {
+            cout << "   1   2   3" << endl;
+            for (int i = 0; i < tabuleiro.size(); ++i) {
+                // Print the indexes
+                cout << i + 1 << "  ";
+                for (int j = 0; j < tabuleiro[i].size(); ++j) {
+                    if (tabuleiro[i][j] == Player::None) {
+                        cout << " ";
+                    } else if (tabuleiro[i][j] == Player::X) {
+                        cout << "X";
+                    } else {
+                        cout << "O";
+                    }
+                    if (j < 2) {
+                        cout << " | ";
+                    }
+                }
+                cout << endl;
+                if (i < 2) {
+                    cout << "  ------------" << endl;
+                }
+            }
         }
 
         // def maxValor(tabuleiro):
@@ -193,38 +217,39 @@ class TicTacToe {
 
 int main (){
     TicTacToe game;
-
+    // clear the screen
+    cout << "\033[2J\033[1;1H";
+    
     while (!game.final(game.getTabuleiro())) {
         cout << "Tabuleiro atual: " << endl;
         vector<vector<Player>> tabuleiro = game.getTabuleiro();
-        for (int i = 0; i < tabuleiro.size(); ++i) {
-            for (int j = 0; j < tabuleiro[i].size(); ++j) {
-                if (tabuleiro[i][j] == Player::None) {
-                    cout << " ";
-                } else if (tabuleiro[i][j] == Player::X) {
-                    cout << "X";
-                } else {
-                    cout << "O";
-                }
-                if (j < 2) {
-                    cout << " | ";
-                }
-            }
-            cout << endl;
-            if (i < 2) {
-                cout << "---------" << endl;
-            }
-        }
+        game.printBoard();
 
         if (game.jogador(tabuleiro) == Player::X) {
-            cout << "Vez do jogador (X). Escolha a linha e a coluna (0-2): ";
             int row, col;
-            cin >> row >> col;
-            game.jogadaJogador(row, col);
+            cout << "Vez do jogador (X)." << endl << "Escolha a linha (1-3): ";
+            cin >> row;
+            cout << "Escolha a coluna (1-3): ";
+            cin >> col;
+            game.jogadaJogador(row - 1, col - 1);
         } else {
             cout << "Vez da IA (O)." << endl;
             game.jogadaIA();
         }
+        cout << "-----------------" << endl;
+        // clear the screen
+        cout << "\033[2J\033[1;1H";
+    }
+    game.printBoard();
+    cout << "Fim de jogo!" << endl;
+
+    // Who won?
+    if (game.custo(game.getTabuleiro()) == 1) {
+        cout << "Jogador (X) venceu!" << endl;
+    } else if (game.custo(game.getTabuleiro()) == -1) {
+        cout << "IA (O) venceu!" << endl;
+    } else {
+        cout << "Empate!" << endl;
     }
 
 
