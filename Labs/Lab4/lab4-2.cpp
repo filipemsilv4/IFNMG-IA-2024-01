@@ -372,9 +372,17 @@ int main() {
 
     // Who won?
     if (game.custo(game.getboard()) == 1) {
-        cout << "Jogador (\033[1;34mX\033[0m) venceu!" << endl;
+        if (player_symbol == 'X'){
+            cout << "Jogador (\033[1;34mX\033[0m) venceu!" << endl;
+        } else {
+            cout << "IA (\033[1;34mX\033[0m) venceu!" << endl;
+        }
     } else if (game.custo(game.getboard()) == -1) {
-        cout << "IA (\033[1;31mO\033[0m) venceu!" << endl;
+        if (player_symbol == 'O'){
+            cout << "Jogador (\033[1;31mO\033[0m) venceu!" << endl;
+        } else {
+            cout << "IA (\033[1;31mO\033[0m) venceu!" << endl;
+        }
     } else {
         cout << "Empate!" << endl;
     }
