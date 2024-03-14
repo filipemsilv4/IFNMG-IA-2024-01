@@ -303,12 +303,29 @@ int main() {
     // clear the screen
     cout << "\033[2J\033[1;1H";
 
+    char player_symbol;
+    char IA_symbol;
+    Player player;
+    cout << "Voce gostaria de comecar o jogo? (s/n): ";
+    cin >> player_symbol;
+
+    if (player_symbol == 's'){
+        player = Player::X;
+        player_symbol = 'X';
+        IA_symbol = 'O';
+    } else {
+        player = Player::O;
+        player_symbol = 'O';
+        IA_symbol = 'X';
+    }
+
+
     while (!game.final(game.getboard())) {
         //cout << "Tabuleiro após a jogada: " << endl;
         vector<vector<Player>> board = game.getboard();
         game.printBoard();
 
-        if (game.jogador(board) == Player::X) {
+        if (game.jogador(board) == player) {
             int row, col;
 
             if (game.history_size() > 1){
@@ -331,7 +348,7 @@ int main() {
                 }
             }
 
-            cout << "Vez do jogador (\033[1;34mX\033[0m)." << endl << "Escolha a linha (1-3): ";
+            cout << "Vez do jogador (" << player_symbol << ")." << endl << "Escolha a linha (1-3): ";
             cin >> row;
             cout << "Escolha a coluna (1-3): ";
             cin >> col;
@@ -344,7 +361,7 @@ int main() {
             cout << "Tabuleiro após a sua jogada: " << endl;
         } else {
             cout << "\033[1;36m-----------------\033[0m" << endl;
-            cout << "--- Jogada da IA (\033[1;31mO\033[0m). ---" << endl;
+            cout << "--- Jogada da IA (" << IA_symbol << "). ---" << endl;
             game.AITurn();
             cout << "Tabuleiro após a jogada da IA: " << endl;
         }
