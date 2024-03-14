@@ -70,10 +70,10 @@ class TicTacToe {
 
         // #Retorna o board que resulta ao fazer uma jogada do vetor de ações
         // def resultado(board, acao):
-        vector<vector<Player>> resultado(vector<vector<Player>> board, pair<int, int> acao) {
+        vector<vector<Player>> resultado(vector<vector<Player>> board, pair<int, int> acao, bool allow_override = false) {
             vector<vector<Player>> novoboard = board;
             // Check if the action is valid
-            if (novoboard[acao.first][acao.second] != Player::None) {
+            if (allow_override == false && novoboard[acao.first][acao.second] != Player::None) {
                 cout << "Jogada inválida!" << endl;
                 throw "Jogada inválida!";
             }
@@ -280,7 +280,22 @@ class StrangeTicTacToe : public TicTacToe {
                 throw msg;
             }
         }
+
+        void playerTurn(int row, int col, bool undo) {
+            if (undo){
+                if (history.size() > 1){
+                    board = history[history.size() - 2]; // Get the previous state
+                    history.pop_back(); // Remove the current state
+                    board = resultado(board, {row, col}, true); // Override the previous player's move
+                } else {
+                    cout << "Não é possível desfazer uma jogada nunca feita! Pera, nem era pro programa chegar aqui. Algo claramente deu muito errado." << endl;
+                }
+            }
+        }
+
+        int history_size(){ return history.size(); }
 };
+
 
 int main() {
     StrangeTicTacToe game;
@@ -294,6 +309,27 @@ int main() {
 
         if (game.jogador(board) == Player::X) {
             int row, col;
+
+            if (game.history_size() > 1){
+                cout << "Deseja mudar a ultima jogada de seu oponente? (s/n): ";
+                char undo;
+                cin >> undo;
+                if (undo == 's'){
+                    cout << "Escolha a linha (1-3): ";
+                    cin >> row;
+                    cout << "Escolha a coluna (1-3): ";
+                    cin >> col;
+                    try {
+                        game.playerTurn(row - 1, col - 1, true);
+                    } catch (const char* msg) {
+                        cout << msg << endl;
+                        continue;
+                    }
+                    cout << endl << endl << endl;
+                    game.printBoard();
+                }
+            }
+
             cout << "Vez do jogador (\033[1;34mX\033[0m)." << endl << "Escolha a linha (1-3): ";
             cin >> row;
             cout << "Escolha a coluna (1-3): ";
@@ -309,8 +345,7 @@ int main() {
             game.AITurn();
         }
         cout << "\033[1;36m-----------------\033[0m" << endl;
-        // clear the screen
-        cout << "\033[2J\033[1;1H";
+        cout << endl << endl << endl;
     }
     game.printBoard();
     cout << "Fim de jogo!" << endl;
