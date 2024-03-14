@@ -287,6 +287,7 @@ class StrangeTicTacToe : public TicTacToe {
                     board = history[history.size() - 2]; // Get the previous state
                     history.pop_back(); // Remove the current state
                     board = resultado(board, {row, col}, true); // Override the previous player's move
+                    push_to_history(board);
                 } else {
                     cout << "Não é possível desfazer uma jogada nunca feita! Pera, nem era pro programa chegar aqui. Algo claramente deu muito errado." << endl;
                 }
