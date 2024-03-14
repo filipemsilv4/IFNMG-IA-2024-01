@@ -304,7 +304,7 @@ int main() {
     cout << "\033[2J\033[1;1H";
 
     while (!game.final(game.getboard())) {
-        cout << "board atual: " << endl;
+        //cout << "Tabuleiro após a jogada: " << endl;
         vector<vector<Player>> board = game.getboard();
         game.printBoard();
 
@@ -326,7 +326,7 @@ int main() {
                         cout << msg << endl;
                         continue;
                     }
-                    cout << endl << endl << endl;
+                    cout << "Tabuleiro após a mudança: " << endl;
                     game.printBoard();
                 }
             }
@@ -341,12 +341,14 @@ int main() {
                 cout << msg << endl;
                 continue;
             }
+            cout << "Tabuleiro após a sua jogada: " << endl;
         } else {
-            cout << "Vez da IA (\033[1;31mO\033[0m)." << endl;
+            cout << "\033[1;36m-----------------\033[0m" << endl;
+            cout << "--- Jogada da IA (\033[1;31mO\033[0m). ---" << endl;
             game.AITurn();
+            cout << "Tabuleiro após a jogada da IA: " << endl;
         }
         cout << "\033[1;36m-----------------\033[0m" << endl;
-        cout << endl << endl << endl;
     }
     game.printBoard();
     cout << "Fim de jogo!" << endl;
